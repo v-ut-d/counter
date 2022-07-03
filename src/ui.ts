@@ -18,13 +18,18 @@ export async function display(
     if (!match?.groups) continue;
     const oldCount = Number.parseInt(match.groups.count) || 0;
     if (match.groups.role) {
-      const role = guild.roles.cache.find(
-        (role) => role.name === match.groups?.role
-      );
-      if (!role) continue;
-      const count = stats.get(role.id);
-      if (!count || count == oldCount) continue;
-      await channel.setName(`@${role.name} Count: ${count}`);
+      if (match.groups.role === 'everyone') {
+        const count = stats.get(guild.roles.everyone.id);
+        await channel.setName(`@everyone Count: ${count}`);
+      } else {
+        const role = guild.roles.cache.find(
+          (role) => role.name === match.groups?.role
+        );
+        if (!role) continue;
+        const count = stats.get(role.id);
+        if (!count || count == oldCount) continue;
+        await channel.setName(`@${role.name} Count: ${count}`);
+      }
     } else {
       const attr = match.groups.attr;
       let count: number | undefined = undefined;
