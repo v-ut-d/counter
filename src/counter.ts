@@ -1,12 +1,4 @@
-import {
-  Client,
-  Collection,
-  Guild,
-  GuildMember,
-  PartialGuildMember,
-  Role,
-  Snowflake,
-} from 'discord.js';
+import { Client, Collection, Guild, Snowflake } from 'discord.js';
 import { display } from './ui';
 
 export const BOT = Symbol('BOT');
@@ -14,30 +6,18 @@ export const BOT = Symbol('BOT');
 export type RoleLike = Snowflake | typeof BOT;
 
 export class GuildCounter {
-  private fetching = false;
-  counts: Collection<RoleLike, number> = new Collection();
   constructor(public guild: Guild) {}
-  private renewBotCount() {
-    this.counts.set(
+  get counts() {
+    const counts: Collection<RoleLike, number> =
+      this.guild.roles.cache.mapValues((role) => role.members.size);
+    counts.set(
       BOT,
       this.guild.members.cache.filter((member) => member.user.bot).size
     );
-  }
-  private renewRoleCount(role: Role) {
-    this.counts.set(role.id, role.members.size);
-  }
-  dispatch(member: GuildMember | PartialGuildMember, force = false) {
-    if (this.fetching && !force) return;
-    if (member.user.bot) {
-      this.renewBotCount();
-    }
-    member.roles.cache.each((role) => this.renewRoleCount(role));
+    return counts;
   }
   async fetchAll() {
-    this.fetching = true;
-    const members = await this.guild.members.fetch();
-    members.each((member) => this.dispatch(member, true));
-    this.fetching = false;
+    await this.guild.members.fetch();
   }
 }
 
@@ -65,9 +45,5 @@ export default class Counter {
   async fetchAll(guild: Guild) {
     const counter = this.ensureGuild(guild);
     await counter.fetchAll();
-  }
-  dispatch(member: GuildMember | PartialGuildMember) {
-    const counter = this.ensureGuild(member.guild);
-    counter.dispatch(member);
   }
 }
