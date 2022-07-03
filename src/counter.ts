@@ -17,7 +17,9 @@ export class GuildCounter {
     return counts;
   }
   async fetchAll() {
-    await this.guild.members.fetch();
+    await this.guild.members
+      .fetch()
+      .catch((err) => console.error('Member fetch:', this.guild.id, err));
   }
 }
 
@@ -34,9 +36,11 @@ export default class Counter {
     }
     const intervalEvent = async () => {
       await Promise.all(
-        this.counters.map((counter) => {
-          display(counter.guild, counter.counts);
-        })
+        this.counters.map((counter) =>
+          display(counter.guild, counter.counts).catch((err) =>
+            console.error('Display:', counter.guild.id, err)
+          )
+        )
       );
     };
     setInterval(intervalEvent, 60 * 60 * 1000);
