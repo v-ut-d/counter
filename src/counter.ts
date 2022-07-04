@@ -22,11 +22,11 @@ export default class Counter {
     }
     const hourly = async () => {
       await Promise.all(
-        client.guilds.cache.map((guild) => {
+        client.guilds.cache.map((guild) =>
           display(guild, Counter.getStats(guild)).catch((err) =>
             console.error('Display:', guild.id, err)
-          );
-        })
+          )
+        )
       );
     };
     setInterval(hourly, 60 * 60 * 1000);
