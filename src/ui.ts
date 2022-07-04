@@ -9,30 +9,30 @@ export async function display(guild: Guild, stats: Stats) {
   if (!category) return;
   for (const channel of category.children.values()) {
     if (!channel.isVoice()) continue;
+
     const match = channel.name.match(
-      /^(@(?<role>.*) Count|(?<attr>Bot) Count)(: (?<count>\d*))?$/
+      /^(?<statsName>Bot|(@.+)) Count(: (?<count>[0-9]+))?$/
     );
-    if (!match?.groups) continue;
-    const oldCount = Number.parseInt(match.groups.count) || 0;
-    if (match.groups.role) {
-      if (match.groups.role === 'everyone') {
-        const count = stats.get(guild.roles.everyone.id);
-        await channel.setName(`@everyone Count: ${count}`);
-      } else {
-        const role = guild.roles.cache.find(
-          (role) => role.name === match.groups?.role
-        );
-        if (!role) continue;
-        const count = stats.get(role.id);
-        if (!count || count == oldCount) continue;
-        await channel.setName(`@${role.name} Count: ${count}`);
-      }
-    } else {
-      const attr = match.groups.attr;
-      if (!isAttr(attr)) return;
-      const count = stats.get(AttrTypes[attr]);
-      if (!count || count == oldCount) continue;
-      await channel.setName(`${attr} Count: ${count}`);
+    if (!match?.groups?.statsName) continue;
+
+    const statsName = match.groups.statsName;
+    const oldCount = Number.parseInt(match.groups.count);
+
+    let count: number | undefined = undefined;
+
+    if (statsName.startsWith('@')) {
+      const role =
+        statsName === '@everyone'
+          ? guild.roles.everyone
+          : guild.roles.cache.find((role) => `@${role.name}` === statsName);
+      count = role && stats.get(role.id);
+    } else if (isAttr(statsName)) {
+      count = stats.get(AttrTypes[statsName]);
     }
+
+    if (count === oldCount) continue;
+    await channel
+      .setName(`${statsName} Count: ${count || 0}`)
+      .catch((err) => console.error('Display:', guild.id, err));
   }
 }
