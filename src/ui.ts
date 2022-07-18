@@ -1,14 +1,15 @@
-import { CategoryChannel, Guild } from 'discord.js';
+import { CategoryChannel, ChannelType, Guild } from 'discord.js';
 import { Stats, AttrTypes, isAttr } from './stattypes';
 
 export async function display(guild: Guild, stats: Stats) {
   const category = guild.channels.cache.find(
     (channel): channel is CategoryChannel =>
-      channel.type === 'GUILD_CATEGORY' && channel.name == 'SERVER STATS'
+      channel.type === ChannelType.GuildCategory &&
+      channel.name == 'SERVER STATS'
   );
   if (!category) return;
-  for (const channel of category.children.values()) {
-    if (!channel.isVoice()) continue;
+  for (const channel of category.children.cache.values()) {
+    if (channel.type !== ChannelType.GuildVoice) continue;
 
     const match = channel.name.match(
       /^(?<statsName>Bot|(@.+)) Count(: (?<count>[0-9]+))?$/
